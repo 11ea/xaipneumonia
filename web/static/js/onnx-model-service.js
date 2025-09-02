@@ -29,7 +29,7 @@ class ONNXModelService {
             console.log('Input names:', this.session.inputNames);
             console.log('Output names:', this.session.outputNames);
 
-            //await this.warmUp();
+            await this.warmUp();
 
         } catch (error) {
             console.error('Error loading ONNX model:', error);
@@ -104,13 +104,6 @@ class ONNXModelService {
         console.warn('Feature map extraction requires model modification');
         return null;
     }
-    /**
- * Applies gamma correction to an image.
- *
- * @param {Uint8ClampedArray} imageData - The 1D array of pixel data (e.g., from a Canvas ImageData object).
- * @param {number} gamma - The gamma value (e.g., 2.2 for display, 0.45 for linearizing).
- * @returns {Uint8ClampedArray} The processed image data.
- */
     async applyGammaCorrection(imageData, gamma = 1.0) {
         const outputData = new Uint8ClampedArray(imageData); // Create a copy for output
         const inverseGamma = 1 / gamma;
@@ -145,16 +138,14 @@ class ONNXModelService {
                         }
                     }
 
-                    // 1. Calculate Histogram for the tile
                     const histogram = new Array(256).fill(0);
                     for (const pixel of tilePixels) {
                         histogram[pixel]++;
                     }
 
-                    // 2. Apply contrast limiting (clipping)
                     const numPixelsInTile = tilePixels.length;
                     const averagePixelsPerBin = numPixelsInTile / 256;
-                    const actualClipLimit = clipLimit * averagePixelsPerBin; // Dynamic clip limit based on tile size
+                    const actualClipLimit = clipLimit * averagePixelsPerBin;
 
                     let excess = 0;
                     for (let i = 0; i < 256; i++) {
@@ -164,7 +155,6 @@ class ONNXModelService {
                         }
                     }
 
-                    // Redistribute excess
                     const redistributionStep = Math.floor(excess / 256);
                     let remainingExcess = excess % 256;
 
@@ -176,20 +166,17 @@ class ONNXModelService {
                         }
                     }
 
-                    // 3. Calculate Cumulative Distribution Function (CDF)
                     const cdf = new Array(256);
                     cdf[0] = histogram[0];
                     for (let i = 1; i < 256; i++) {
                         cdf[i] = cdf[i - 1] + histogram[i];
                     }
 
-                    // Normalize CDF to 0-255 range
                     const minCdf = cdf[0];
                     for (let i = 0; i < 256; i++) {
                         cdf[i] = Math.round(((cdf[i] - minCdf) / (numPixelsInTile - minCdf)) * 255);
                     }
 
-                    // 4. Apply mapping to the tile pixels
                     for (let y = startY; y < endY; y++) {
                         for (let x = startX; x < endX; x++) {
                             const originalPixelValue = imageData[(y * width + x) * 4 + channel];

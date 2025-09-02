@@ -455,18 +455,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function forceGarbageCollection() {
-        // Try to force garbage collection
         if (window.gc) {
             window.gc();
         }
-        // Alternative method
         try {
             new ArrayBuffer(1024 * 1024 * 100); // Allocate and immediately discard
         } catch (e) { }
     }
 
     function inspectResults(results) {
-        // Detailed inspection of model outputs
         const inspection = {};
         for (const key in results) {
             const tensor = results[key];
@@ -536,11 +533,10 @@ document.addEventListener('DOMContentLoaded', function () {
         ctx.drawImage(imageElement, 0, 0, 16, 16);
         const imageData = ctx.getImageData(0, 0, 16, 16).data;
 
-        // Simple hash from first few pixels
         let hash = 0;
         for (let i = 0; i < Math.min(100, imageData.length); i++) {
             hash = ((hash << 5) - hash) + imageData[i];
-            hash |= 0; // Convert to 32-bit integer
+            hash |= 0;
         }
 
         return hash;
@@ -661,7 +657,6 @@ document.addEventListener('DOMContentLoaded', function () {
         trySetup();
     }
 
-    // Update the onImageLoaded function to pass dimensions
     function onImageLoaded(img, canvas) {
         console.log('Image loaded, dimensions:', img.naturalWidth, 'x', img.naturalHeight);
 
@@ -673,8 +668,6 @@ document.addEventListener('DOMContentLoaded', function () {
         canvas.style.width = '100%';
         canvas.style.height = '100%';
         canvas.style.pointerEvents = 'none';
-
-        // Pass the dimensions to drawHeatmap
         drawHeatmap(null, img.naturalWidth, img.naturalHeight);
 
         const opacitySlider = document.getElementById('heatmapOpacity');
@@ -686,7 +679,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const canvas = document.getElementById('heatmapOverlay');
         if (!canvas) return;
 
-        // Use provided dimensions or fall back to canvas dimensions
         const finalWidth = width || canvas.width;
         const finalHeight = height || canvas.height;
 
@@ -694,15 +686,12 @@ document.addEventListener('DOMContentLoaded', function () {
         canvas.height = finalHeight;
         const ctx = canvas.getContext('2d');
 
-        // Create mock heatmap data if none provided
         if (!heatmapData) {
             heatmapData = generateMockHeatmapData(finalWidth, finalHeight);
         }
 
-        // Create image data
         const imageData = ctx.createImageData(finalWidth, finalHeight);
 
-        // Apply color map to heatmap data
         for (let i = 0; i < heatmapData.length; i++) {
             const intensity = heatmapData[i];
             const color = getHeatmapColor(intensity);
