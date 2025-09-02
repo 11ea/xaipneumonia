@@ -1,0 +1,85 @@
+<div class="card shadow">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Analysis Results</h5>
+        <div>
+           <!-- Back Button -->
+            <button class="btn btn-sm btn-outline-secondary" data-action="back-to-upload" id="backBtn">
+                <i class="bi bi-arrow-left"></i> Back to Upload
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Classification</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span id="classificationResult"></span>
+                            <span class="badge bg-success" id="confidenceScore"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Image with Heatmap Overlay -->
+        <div class="row mb-4">
+            <div class="col">
+                <div class="card">
+                    <!-- Remove opacity controls from header -->
+                    <div class="card-header">
+                        <h6 class="mb-0">Explainable AI Heatmap</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="position-relative d-inline-block mb-3">
+                            <img id="originalImage" src="" class="img-fluid rounded" style="max-height: 400px;">
+                            <canvas id="heatmapOverlay" class="position-absolute top-0 start-0" style="opacity: 0.5;"></canvas>
+                        </div>
+                        
+                        <!-- Add opacity controls HERE (below the image) -->
+                        <div class="heatmap-controls mt-3">
+                            <div class="row align-items-center justify-content-center">
+                                <div class="col-auto">
+                                    <small class="text-muted">Low</small>
+                                </div>
+                                <div class="col" style="max-width: 200px;">
+                                    <input type="range" class="form-range" id="heatmapOpacity" 
+                                        min="0" max="100" value="50">
+                                </div>
+                                <div class="col-auto">
+                                    <small class="text-muted">High</small>
+                                </div>
+                            </div>
+                            <div class="form-text text-center mt-1">Adjust heatmap visibility</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <!-- Download Button -->
+            <button class="btn btn-primary" data-action="download-result" id="downloadBtn">
+                <i class="bi bi-download"></i> Download Result
+            </button>
+            <!-- Try Another Model Button -->
+            <button class="btn btn-outline-primary" data-action="try-another-model" id="tryAnotherBtn">
+                <i class="bi bi-arrow-repeat"></i> Try Another Model
+            </button>
+            <!-- Save Session Button -->
+            <button class="btn btn-outline-success" data-action="save-session" id="saveSessionBtn">
+                <i class="bi bi-save"></i> Save Session Locally
+            </button>
+        </div>
+
+        <div id="batchResults" class="mt-4" style="display: none;">
+            <h6>Batch Processing Results</h6>
+            <div class="list-group" id="batchResultsList">
+                <!-- Batch results will be added here -->
+            </div>
+        </div>
+    </div>
+</div>
