@@ -1,0 +1,12 @@
+# TypeScript
+web/static/js/
+node_modules/
+*.tsbuildinfo
+
+# Django
+*.pyc
+__pycache__
+db.sqlite3
+media/
+staticfiles/js/
+/venv/

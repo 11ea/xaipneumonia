@@ -1,92 +1,97 @@
-import json
 import os
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from .models import CDNModel
 
-MOCK_RESULTS = {
-    'classification': 'Bacterial Pneumonia',
-    'confidence': 0.87,
-    'heatmap_available': True
-}
-
-def index(request):
-    """Main page with image upload and sample selection"""
-    sample_images = [
-        {'name': 'Sample 1', 'path': '/static/images/sample1.jpg'},
-        {'name': 'Sample 2', 'path': '/static/images/sample2.jpg'},
-        {'name': 'Sample 3', 'path': '/static/images/sample3.jpg'},
-    ]
+def index_view(request):
+    models = CDNModel.objects.filter(is_active=True)
     
-    available_models = get_available_models_list()
-    
-    return render(request, 'index.html', {
-        'sample_images': sample_images,
-        'available_models': available_models
-    })
-
-from django.http import JsonResponse, HttpResponse
-import base64
-from django.views.decorators.csrf import csrf_exempt
-import json
-
-@csrf_exempt
-def process_image(request):
-    """Process image - client handles everything, server just returns mock data"""
-    if request.method == 'POST':
-        try:
-            model_id = request.POST.get('model_id', 'default')
-            
-            import time
-            time.sleep(1.5)
-            
-            available_models = get_available_models_list()
-            model_info = next((m for m in available_models if m['id'] == model_id), available_models[0])
-            
-            result = {
-                'success': True,
-                'result': MOCK_RESULTS,
-                'model_info': model_info,
-                'model_id': model_id,
+    context = {
+        'available_models': [
+            {
+                'id': model.model_type,
+                'name': model.name,
             }
-            
-            return JsonResponse(result)
-            
-        except Exception as e:
-            import traceback
-            print(f"Error in process_image: {e}")
-            print(traceback.format_exc())
-            
-            return JsonResponse({
-                'success': False, 
-                'error': str(e),
-            })
+            for model in models
+        ],
+    }
+    return render(request, 'index.html', context)
+
+
+
+def get_models_config(request):
+    """API endpoint to get all active models"""
+    models = CDNModel.objects.filter(is_active=True)
     
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
-
-
-
-
-def get_available_models(request):
-    """Get list of available models from CDN (mock implementation)"""
-    models = get_available_models_list()
-    return JsonResponse({'models': models})
+    models_data = [
+        {
+            'id': model.model_type,
+            'name': model.name,
+            'cdn_url': model.cdn_url,
+            'input_size': model.input_size,
+            'feature_layers': model.feature_layers,
+            'batch_size': model.batch_size,
+            'classification_layer': model.classification_layer,
+            'class_names': model.classes
+        }
+        for model in models
+    ]
+    
+    return JsonResponse({'models': models_data})
 
 @csrf_exempt
-def switch_model(request):
-    """Switch to a different model (mock implementation)"""
-    if request.method == 'POST':
-        model_id = request.POST.get('model_id')
-        return JsonResponse({'success': True, 'message': f'Switched to model {model_id}'})
+def get_model_config(request, model_type):
+    """API endpoint to get specific model config"""
+    try:
+        model = CDNModel.objects.get(model_type=model_type, is_active=True)
+        return JsonResponse({
+            'id': model.model_type,
+            'name': model.name,
+            'cdn_url': model.cdn_url,
+            'input_size': model.input_size,
+            'feature_layers': model.feature_layers,
+            'batch_size': model.batch_size,
+            'classification_layer': model.classification_layer,
+            'classes': model.classes
+        })
+    except CDNModel.DoesNotExist:
+        return JsonResponse({'error': 'Model not found'}, status=404)
     
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+@csrf_exempt
+def mask_worker_view(request):
+    worker_path = os.path.join(os.path.dirname(__file__), 'static', 'js', 'mask-worker.js')
+    
+    try:
+        with open(worker_path, 'r') as f:
+            content = f.read()
+        
+        response = HttpResponse(content, content_type='application/javascript')
+        response['Access-Control-Allow-Origin'] = '*'
+        return response
+        
+    except FileNotFoundError:
+        return HttpResponse('Worker file not found', status=404)
+    
 
-def get_available_models_list():
-    """Helper function to get list of available models"""
-    return [
-        {'id': 'yolon-artirilmisVeri', 'name': 'Pneumonia Detector v2 Fast', 'size': '6.2MB', 'updated': '2025-09-02'},
-        {'id': 'yolos-artirilmisVeri', 'name': 'Pneumonia Detector v2 Slow', 'size': '21.5MB', 'updated': '2025-09-02'},
-        {'id': 'yolos-azVeri', 'name': 'Pneumonia Detector V1 Slow', 'size': '21.4MB', 'updated': '2025-09-02'},
-    ]
+def get_model_classes(request, model_type):
+    try:
+        model = CDNModel.objects.get(model_type=model_type, is_active=True)
+        return JsonResponse({'classes': model.classes})
+    except CDNModel.DoesNotExist:
+        return JsonResponse({'error': 'Model not found'}, status=404)
+    
+def sample_images(request):
+    classes = list(CDNModel.c.all())
+    samples = []
+
+    for c in classes:        
+        img = c.images.order_by("?").first()  # random 1 per class
+        if img:
+            samples.append({
+                "class": c.name,
+                "url": img.url
+            })
+
+    return JsonResponse({"samples": samples})
